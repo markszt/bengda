@@ -5418,7 +5418,7 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
   function addCredits(){
     const hero=$('.menu-hero'); if(!hero||document.getElementById('bengda-credits'))return;
     const d=document.createElement('div'); d.id='bengda-credits';
-    d.innerHTML='<div class="row"><a href="https://github.com/" target="_blank" rel="noopener">GitHub</a><a href="https://ko-fi.com/" target="_blank" rel="noopener">赞助 / Support</a><a href="#" id="bengda-share">分享链接</a></div><div class="src">数据：OpenStreetMap contributors · ODbL &nbsp;|&nbsp; 灵感：韩国 SMASH 系列拆迁玩法 · 非官方</div>';
+    d.innerHTML='<div class="row"><a href="https://github.com/markszt/bengda" target="_blank" rel="noopener">GitHub</a><a href="https://ko-fi.com/" target="_blank" rel="noopener">赞助 / Support</a><a href="#" id="bengda-share">分享链接</a></div><div class="src">数据：OpenStreetMap contributors · ODbL &nbsp;|&nbsp; 灵感：韩国 SMASH 系列拆迁玩法 · 非官方</div>';
     const legal=hero.querySelector('.legal'); if(legal) legal.style.display='none';
     const foot=hero.querySelector('.intro-note'); if(foot) foot.textContent='数据：OpenStreetMap ODbL · Three.js MIT · 非官方同人作品';
     (legal||hero.querySelector('#play')).insertAdjacentElement('beforebegin',d);
