@@ -1,24 +1,148 @@
 # BENGDA
 
-A single-file 3D campus demolition game with an online campus leaderboard.
+BENGDA 是一个单文件 3D 校园拆除游戏。玩家选择一所大学，在 3D 校园里破坏建筑，伤害会按 **大学** 汇总到在线排行榜。
 
-## Live site
+**在线游玩：** https://markszt.github.io/bengda/
 
-https://markszt.github.io/bengda/
+> 虚构娱乐游戏，非官方项目。
 
-## Files in this repository
+---
 
-- `index.html` — the whole game: Three.js, map data, embedded textures/audio, UI and styles.
-- `online.js` — starts a run, auto-uploads damage every 6 seconds, sends the current campus ID.
-- `online-rank.js` — in-game HUD rank/gap display and the online university ranking.
-- `README.md` — this file.
+## 游戏内容
 
-The Cloudflare Worker and D1 database are deployed separately and are not in this repository.
+- 19 所大学/应用技术大学地图
+- 第一人称/环绕视角的 3D 城市
+- 多种拆除武器与技能
+- 建筑逐块破坏
+- 德语 / 中文 / 英语界面
+- 手机端支持双指缩放
+- 游戏内显示当前大学排名、距离下一名和第一名的伤害差
 
-Backend:
+---
 
+## 仓库结构
+
+| 文件 | 作用 |
+|---|---|
+| `index.html` | 整个游戏：Three.js、地图数据、内嵌图片/音频、UI、样式、游戏逻辑 |
+| `online.js` | 开局、每 6 秒自动上传伤害、提交当前大学 ID |
+| `online-rank.js` | 游戏内排名 HUD、大学排行榜、排序、三语言文案 |
+| `README.md` | 项目说明 |
+
+这是一个**无构建步骤**的项目：`index.html` 就是最终产物。
+
+---
+
+## 在线排行榜
+
+排行榜后端不在这个仓库里，单独部署在 Cloudflare：
+
+```text
+Cloudflare Worker + D1
+```
+
+API：
+
+```text
 https://fh-aachen-leaderboard.markszt0311-a52.workers.dev
+```
 
-## Credits
+### 一次游戏的数据流
 
-Game code, UI and online leaderboard developed with assistance from DeepSeek (DSH coding agent).
+```text
+打开网站
+→ 选择大学
+→ 点 SPIELEN
+→ online.js 请求 /api/runs/start 获取 nonce
+→ 每 6 秒上传一次本段伤害
+→ Worker 校验后写入 D1
+→ online-rank.js 读取大学排行榜
+→ 游戏内 HUD 显示排名差
+→ 菜单排行榜每 15 秒同步一次
+```
+
+### 排名计算
+
+- 排行榜按 **大学** 聚合，不按玩家
+- 没有伤害的大学也会显示 `0 DMG`
+- 默认显示前 3
+- `ALLE UNIVERSITÄTEN ANZEIGEN` 显示全部 19 所
+- 排序按钮切换最高/最低伤害
+- 当前大学排名差优先在本地计算，服务器刷新后再同步
+
+---
+
+## 开发与更新
+
+本仓库没有 `package.json`、`src/` 或构建工具。修改后直接推送即可。
+
+### 修改游戏
+
+```bash
+cd ~/Desktop/BENGDA-Site
+# 修改 index.html / online.js / online-rank.js
+git add .
+git commit -m "说明这次改了什么"
+git push
+```
+
+GitHub Pages 会自动重新部署：
+
+```text
+https://markszt.github.io/bengda/
+```
+
+### 修改后端
+
+后端源码在本地单独目录，不在这个仓库：
+
+```text
+FH-Aachen-Online/
+├── worker.js
+├── wrangler.toml
+└── migrations/
+```
+
+改完后需要重新部署 Worker 和/或执行 D1 migration。
+
+---
+
+## API
+
+| 方法 | 路径 | 作用 |
+|---|---|---|
+| POST | `/api/runs/start` | 开始一局，返回 nonce |
+| POST | `/api/runs` | 提交伤害和 campusId |
+| GET | `/api/campus-leaderboard` | 大学排行榜 |
+| GET | `/api/stats` | 总伤害/局数统计 |
+| POST | `/api/players` | 创建/更新玩家 |
+| DELETE | `/api/players` | 删除玩家数据 |
+
+---
+
+## 已知限制
+
+- 伤害由客户端上报，技术上可以伪造
+- 没有账号系统，玩家 ID 是浏览器随机 UUID
+- API 是公开的
+- 前端代码只要网站公开，就一定能被浏览器下载和查看
+- 排行榜目前是总伤害榜，没有周榜/季度榜
+
+---
+
+## 开发记录与 Token
+
+- 开发方式：DeepSeek + DSH coding agent
+- 开发过程：多轮迭代，包含游戏逻辑、音效、HUD、在线排行榜、手机适配和 Cloudflare 后端
+- **精确 token 用量**：当前运行环境没有暴露本次会话的精确 usage 数字，因此本文档不写虚构数值
+- 如需准确用量，请查看 DeepSeek API 控制台的 usage / billing 页面
+
+---
+
+## 数据与版权
+
+- 校园/地图数据：OpenStreetMap contributors，ODbL
+- 地图底图：Esri World Street Map
+- 3D 引擎：Three.js，MIT
+- 游戏内音频：项目内嵌采样与 Web Audio 合成
+- 本项目为非官方虚构作品，与任何大学或机构无关
