@@ -6196,6 +6196,9 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
   const css=document.createElement('style');
   css.textContent=`
   #menu-toggle{justify-content:center!important;align-items:center!important}
+  #bengda-grade{min-width:0!important;padding:6px 10px!important}
+  #bengda-grade .w,#bengda-grade .bar{display:none!important}
+  #fx-toggle{z-index:10000!important}
   body.playing #menu-toggle,
   body.playing #menu-toggle.open{display:flex!important;right:0!important;z-index:10000!important}
   `;
@@ -6528,5 +6531,35 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
   FHACOnline.attachToGame();
 </script>
 <script src="./online-rank.js"></script>
+
+<script>
+(function(){
+  const canvas = document.querySelector('#stage canvas') || document.querySelector('canvas');
+  if (!canvas) return;
+  let startDist = 0, startTr = 0, pinching = false;
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 2 || !window.CAMPUS) return;
+    pinching = true;
+    startDist = dist(e.touches);
+    startTr = CAMPUS.cam.tr;
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    if (!pinching || e.touches.length !== 2 || !window.CAMPUS) return;
+    const d = dist(e.touches);
+    if (startDist > 0 && d > 0) {
+      CAMPUS.cam.tr = Math.max(65, Math.min(640, startTr * startDist / d));
+      startDist = d;
+      startTr = CAMPUS.cam.tr;
+    }
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchend', (e) => {
+    if (e.touches.length < 2) pinching = false;
+  }, { passive: true });
+  canvas.style.touchAction = 'none';
+})();
+</script>
 </body>
 </html>

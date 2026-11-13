@@ -95,6 +95,8 @@
     list.dataset.online = '1';
     list.innerHTML = '';
     const rows = window.__onlineRows || [];
+    const expBtn = document.getElementById('rank-expand');
+    if (expBtn) expBtn.style.display = rows.length > 3 ? '' : 'none';
     if (!rows.length) {
       list.innerHTML = `<div class="rank-empty">${esc(window.__onlineError ? d.error : d.empty)}</div>`;
       return;
