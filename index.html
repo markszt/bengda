@@ -5427,12 +5427,17 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
     const em=document.getElementById('bengda-email');
     if(em) em.addEventListener('click',async e=>{
       e.preventDefault(); e.stopPropagation();
-      const addr='markszt0311@gmail.com', original=em.textContent;
+      const addr='markszt0311@gmail.com';
       let ok=false;
+      em.dataset.copying='1';
       try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(addr);ok=true;}}catch(err){}
       if(!ok){const ta=document.createElement('textarea');ta.value=addr;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.focus();ta.select();try{ok=document.execCommand('copy');}catch(err){}document.body.removeChild(ta);}
-      em.textContent=ok?'已复制 / Kopiert':'复制失败 / manuell kopieren';
-      setTimeout(()=>{em.textContent=original;},1800);
+      const l=window.CAMPUS?.state?.lang;
+      em.textContent=ok?(l==='zh'?'已复制':l==='de'?'Kopiert':'Copied'):(l==='zh'?'复制失败':l==='de'?'Kopieren fehlgeschlagen':'Copy failed');
+      setTimeout(()=>{
+        em.dataset.copying='';
+        em.textContent=l==='zh'?'邮箱：markszt0311@gmail.com':l==='de'?'E-Mail: markszt0311@gmail.com':'Email: markszt0311@gmail.com';
+      },1800);
     });
   }
   function addGrade(){
@@ -6078,13 +6083,15 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
       links[2].textContent=zh?'分享链接':de?'Teilen':'Share link';
     }
     const noSponsor=document.querySelector('#bengda-credits .none');
-    if(noSponsor)noSponsor.textContent='赞助 / Support: 暂时没有';
+    if(noSponsor)noSponsor.textContent=zh?'赞助：暂时没有':de?'Unterstützen: derzeit keine':'Support: currently none';
+    const em=document.getElementById('bengda-email');
+    if(em&&em.dataset.copying!=='1')em.textContent=zh?'邮箱：markszt0311@gmail.com':de?'E-Mail: markszt0311@gmail.com':'Email: markszt0311@gmail.com';
     const src=document.querySelector('#bengda-credits .src');
     if(src)src.textContent=zh?'校园数据：OpenStreetMap ODbL · 地图：Esri World Street Map · 灵感：韩国 SMASH 拆迁玩法 · 非官方':de?'Campusdaten: OpenStreetMap ODbL · Karte: Esri World Street Map · Inspiration: koreanisches SMASH · Inoffiziell':'Campus data: OpenStreetMap ODbL · Map: Esri World Street Map · Inspired by Korean SMASH · Unofficial';
     const note=document.querySelector('.intro-note');
     if(note)note.textContent=zh?'数据：OpenStreetMap ODbL · Three.js MIT · 非官方同人作品':de?'Daten: OpenStreetMap ODbL · Three.js MIT · Inoffizielles Fan-Projekt':'Data: OpenStreetMap ODbL · Three.js MIT · Unofficial fan project';
     const coming=document.getElementById('bengda-coming');
-    if(coming)coming.textContent='赞助 / Support: 暂时没有';
+    if(coming)coming.textContent=zh?'赞助：暂时没有':de?'Unterstützen: derzeit keine':'Support: currently none';
     if(de){document.querySelectorAll('#bengda-grade .w').forEach(e=>{const k=e.parentElement?.querySelector('.g')?.textContent;if(GRADE_DE[k])e.textContent=GRADE_DE[k];});}
   }
   setInterval(apply,220);apply();
