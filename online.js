@@ -95,6 +95,17 @@
     }
   }
 
+  function currentCampusId() {
+    try {
+      if (window.CAMPUS && typeof window.CAMPUS.campusId === 'string' && window.CAMPUS.campusId) return window.CAMPUS.campusId;
+      const fromUrl = new URL(location.href).searchParams.get('campus');
+      if (fromUrl) return fromUrl;
+      return localStorage.getItem('ca-campus') || 'aachen';
+    } catch (e) {
+      return 'aachen';
+    }
+  }
+
   async function startRun() {
     const id = playerId();
     const res = await api('/api/runs/start', {
@@ -106,6 +117,7 @@
       startedAt: res.startedAt || new Date().toISOString(),
       startDamage: gameDamage(),
       startClientTime: Date.now(),
+      campusId: currentCampusId(),
       reported: false,
     };
     return state.run;
@@ -133,6 +145,7 @@
           playerId: playerId(),
           nonce: run.nonce,
           damage,
+          campusId: run.campusId || currentCampusId(),
           gameVersion: '2.05',
         }),
         keepalive: reason === 'pagehide' || reason === 'hidden',
@@ -208,6 +221,10 @@
     return api(`/api/leaderboard?period=${encodeURIComponent(period)}&order=${encodeURIComponent(order)}&limit=${Math.max(1, Math.min(100, limit))}`);
   }
 
+  async function loadCampusLeaderboard(period = 'all', order = 'desc', limit = 100) {
+    return api(`/api/campus-leaderboard?period=${encodeURIComponent(period)}&order=${encodeURIComponent(order)}&limit=${Math.max(1, Math.min(200, limit))}`);
+  }
+
   function bindOnce() {
     if (window.__fhacOnlineBound) return;
     window.__fhacOnlineBound = true;
@@ -254,7 +271,9 @@
     finishRun,
     loadStats,
     loadLeaderboard,
+    loadCampusLeaderboard,
     deleteData,
+    currentCampusId,
     startAuto,
     stopAuto,
     playerId,

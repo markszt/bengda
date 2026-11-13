@@ -10,8 +10,8 @@
       title: 'RANGLISTE', sub: 'online · nach Schaden',
       top: 'TOP 3', all: 'ALLE',
       most: 'SORTIERUNG: MEISTE SCHÄDEN', least: 'SORTIERUNG: WENIGSTE SCHÄDEN',
-      expand: 'ALLE SPIELER ANZEIGEN', collapse: 'NUR TOP 3',
-      empty: 'Noch keine Online-Runs.', error: 'Online-Rangliste nicht erreichbar.',
+      expand: 'ALLE UNIVERSITÄTEN ANZEIGEN', collapse: 'NUR TOP 3',
+      empty: 'Noch keine Universität beschädigt.', error: 'Online-Rangliste nicht erreichbar.',
       runs: 'Runs', dmg: 'DMG',
       maps: 'CAMPUS-KARTEN', campuses: '19 CAMPUS',
       foot: 'Etagen = interaktive Gebäudeebenen · HP = 1.000.000 + Etagen × 1.200'
@@ -20,8 +20,8 @@
       title: 'RANKING', sub: 'online · by damage',
       top: 'TOP 3', all: 'ALL',
       most: 'SORTING: MOST DAMAGE', least: 'SORTING: LEAST DAMAGE',
-      expand: 'SHOW ALL PLAYERS', collapse: 'ONLY TOP 3',
-      empty: 'No online runs yet.', error: 'Online ranking unavailable.',
+      expand: 'SHOW ALL UNIVERSITIES', collapse: 'ONLY TOP 3',
+      empty: 'No university damaged yet.', error: 'Online ranking unavailable.',
       runs: 'Runs', dmg: 'DMG',
       maps: 'CAMPUS MAPS', campuses: '19 CAMPUSES',
       foot: 'Floors = destructible building levels · HP = 1,000,000 + floors × 1,200'
@@ -30,8 +30,8 @@
       title: '排行榜', sub: '在线 · 按伤害',
       top: '前 3', all: '全部',
       most: '排序：伤害最高', least: '排序：伤害最低',
-      expand: '显示全部玩家', collapse: '只看前 3',
-      empty: '暂无在线记录。', error: '在线排行榜暂时不可用。',
+      expand: '显示全部大学', collapse: '只看前 3',
+      empty: '暂无大学受损记录。', error: '在线排行榜暂时不可用。',
       runs: '局', dmg: '伤害',
       maps: '哒学地图', campuses: '19 所哒学',
       foot: '层数 = 可破坏楼层 · 总血量 = 1,000,000 + 层数 × 1,200'
@@ -75,7 +75,8 @@
     const setText = (el, text) => { if (el && el.textContent !== text) el.textContent = text; };
     setText(document.querySelector('.cb-head b'), d.title);
     setText(document.querySelector('.cb-head small'), d.sub);
-    setText(document.getElementById('rank-count'), expanded ? d.all : d.top);
+    const total = (window.__onlineRows || []).length;
+    setText(document.getElementById('rank-count'), expanded ? `${d.all} ${total}` : d.top);
     const sort = document.getElementById('rank-sort');
     if (sort) { setText(sort, order === 'desc' ? d.most : d.least); sort.title = order === 'desc' ? d.most : d.least; }
     setText(document.getElementById('rank-expand'), expanded ? d.collapse : d.expand);
@@ -102,15 +103,17 @@
       return;
     }
     const max = Math.max(1, ...rows.map(r => Number(r.totalDamage) || 0));
-    for (const row of rows) {
-      const name = row.publicName || (lang() === 'zh' ? '匿名' : lang() === 'de' ? 'Anonym' : 'Anonymous');
-      const pct = Math.max(2, Math.min(100, (Number(row.totalDamage) || 0) / max * 100));
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      const row = rows[rowIndex];
+      const name = (window.__bengdaCampusName && window.__bengdaCampusName(row.campusId)) || row.name || row.campusId;
+      const pct = Math.max(0, Math.min(100, (Number(row.totalDamage) || 0) / max * 100));
+      const sub = `${row.runs || 0} ${d.runs}${row.city ? ' · ' + row.city : ''}`;
       const el = document.createElement('div');
       el.className = 'rank-row online-row';
-      el.innerHTML = `<div class="rank-no">${row.rank}</div>
+      el.innerHTML = `<div class="rank-no">${rowIndex + 1}</div>
         <div class="rank-main">
           <div class="rank-name">${esc(name)}</div>
-          <div class="rank-sub">${row.runs || 0} ${esc(d.runs)}</div>
+          <div class="rank-sub">${esc(sub)}</div>
           <div class="rank-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
         </div>
         <div class="rank-hp">${fmt(row.totalDamage)}<small> ${esc(d.dmg)}</small></div>`;
@@ -123,8 +126,28 @@
     loading = true;
     window.__onlineError = false;
     try {
-      const data = await FHACOnline.loadLeaderboard('all', order, expanded ? 50 : 3);
-      window.__onlineRows = data.entries || [];
+      const data = await FHACOnline.loadCampusLeaderboard('all', order, 200);
+      const entries = data.entries || [];
+      const byId = new Map(entries.map((e) => [e.campusId, e]));
+      const campuses = (window.CAMPUS && window.CAMPUS.campuses) || [];
+      let rows = campuses.map((c) => {
+        const e = byId.get(c.id) || {};
+        return {
+          campusId: c.id,
+          name: c.name,
+          city: c.city || '',
+          totalDamage: Number(e.totalDamage || 0),
+          runs: Number(e.runs || 0),
+        };
+      });
+      if (!rows.length) rows = entries;
+      const dir = order === 'asc' ? 1 : -1;
+      rows.sort((a, b) => {
+        const d = ((Number(a.totalDamage) || 0) - (Number(b.totalDamage) || 0)) * dir;
+        if (d) return d;
+        return String(a.campusId).localeCompare(String(b.campusId));
+      });
+      window.__onlineRows = rows;
       window.__onlineOrder = order;
       window.__onlineError = false;
     } catch (error) {
