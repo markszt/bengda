@@ -54,67 +54,72 @@
   const fmt = (n) => new Intl.NumberFormat(lang() === 'zh' ? 'zh-CN' : lang() === 'de' ? 'de-DE' : 'en-US').format(Math.max(0, Math.round(Number(n) || 0)));
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
-  function ensureFocusCard(){
-    if (document.getElementById('bengda-rank-focus')) return;
-    const wrap = document.querySelector('.campus-browser');
-    if (!wrap) return;
+  let hudServerRows = [];
+  let hudServerCurrent = 0;
+  let hudBonus = 0;
+  const gameDamage = () => {
+    try { return Math.max(0, Number(window.CAMPUS?.state?.damage) || 0); } catch (e) { return 0; }
+  };
+
+  function ensureHudRank(){
+    if (document.getElementById('hud-rank')) return;
+    const foot = document.querySelector('.hp-panel .hp-foot');
+    if (!foot) return;
     const css = document.createElement('style');
     css.textContent = `
-      #bengda-rank-focus{margin:0 0 10px;padding:10px 12px;border:1px solid rgba(255,140,70,.3);background:linear-gradient(180deg,rgba(35,23,18,.95),rgba(16,18,20,.95));box-shadow:0 8px 24px rgba(0,0,0,.25)}
-      .brf-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-      .brf-kicker{font:800 9px/1.2 system-ui,sans-serif;letter-spacing:.16em;color:#ff9a5c}
-      .brf-rank{font:900 10px/1.2 system-ui,sans-serif;color:#ffd3a0;letter-spacing:.06em;white-space:nowrap}
-      .brf-name{margin:4px 0 2px;font:900 16px/1.2 system-ui,sans-serif;color:#f5e8d8}
-      .brf-gap{font:800 10px/1.4 system-ui,sans-serif;color:#ffd3a0}
-      .brf-bar{height:6px;margin:7px 0 5px;background:#2a1c14;overflow:hidden}
-      .brf-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff4a1a,#ffc07a);transition:width .45s ease}
-      .brf-topgap{font:600 9px/1.4 system-ui,sans-serif;color:#a99a8d}
+      #hud-rank{margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12)}
+      .hud-rank-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+      #hud-rank-pos{font:900 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;color:#ffd3a0}
+      #hud-rank-name{font:600 9px/1.2 system-ui,sans-serif;color:#a99a8d;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      #hud-rank-gap{margin-top:3px;font:800 9px/1.35 system-ui,sans-serif;color:#ffb37a}
+      .hud-rank-bar{height:3px;margin-top:4px;background:rgba(255,255,255,.09);overflow:hidden}
+      #hud-rank-fill{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff5a1a,#ffc07a);transition:width .35s ease}
+      #hud-rank-topgap{margin-top:3px;font:600 8px/1.35 system-ui,sans-serif;color:#8e8278;letter-spacing:.04em}
     `;
     document.head.appendChild(css);
-    const card = document.createElement('div');
-    card.id = 'bengda-rank-focus';
-    card.innerHTML = `<div class="brf-head"><span class="brf-kicker" id="brf-kicker"></span><span class="brf-rank" id="brf-rank"></span></div>
-      <div class="brf-name" id="brf-name"></div>
-      <div class="brf-gap" id="brf-gap"></div>
-      <div class="brf-bar"><i id="brf-fill"></i></div>
-      <div class="brf-topgap" id="brf-topgap"></div>`;
-    wrap.insertBefore(card, wrap.firstChild);
+    const el = document.createElement('div');
+    el.id = 'hud-rank';
+    el.innerHTML = `<div class="hud-rank-top"><span id="hud-rank-pos"></span><span id="hud-rank-name"></span></div>
+      <div id="hud-rank-gap"></div>
+      <div class="hud-rank-bar"><i id="hud-rank-fill"></i></div>
+      <div id="hud-rank-topgap"></div>`;
+    foot.insertAdjacentElement('afterend', el);
   }
 
-  function renderFocus(){
-    const card = document.getElementById('bengda-rank-focus');
-    if (!card) return;
+  function renderHudRank(){
+    const el = document.getElementById('hud-rank');
+    if (!el) return;
+    if (!hudServerRows.length || !window.CAMPUS) { el.style.display = 'none'; return; }
     const d = t();
-    const rows = (window.__onlineRows || []).slice().sort((a, b) => {
+    const rows = hudServerRows.map(r => ({ ...r }));
+    const currentId = window.CAMPUS.campusId;
+    const current = rows.find(r => r.campusId === currentId);
+    if (!current) { el.style.display = 'none'; return; }
+    const submitted = Number(window.FHACOnline?.submittedDamage) || 0;
+    const pending = Math.max(0, gameDamage() - submitted);
+    current.totalDamage = (Number(current.totalDamage) || 0) + hudBonus + pending;
+    rows.sort((a, b) => {
       const diff = (Number(b.totalDamage) || 0) - (Number(a.totalDamage) || 0);
       return diff || String(a.campusId).localeCompare(String(b.campusId));
     });
-    const currentId = window.CAMPUS && window.CAMPUS.campusId;
-    const index = rows.findIndex((r) => r.campusId === currentId);
-    if (index < 0) { card.style.display = 'none'; return; }
-    card.style.display = '';
-    const current = rows[index];
+    const index = rows.findIndex(r => r.campusId === currentId);
     const next = index > 0 ? rows[index - 1] : null;
     const gap = next ? Math.max(0, (Number(next.totalDamage) || 0) - (Number(current.totalDamage) || 0)) : 0;
     const topGap = Math.max(0, (Number(rows[0].totalDamage) || 0) - (Number(current.totalDamage) || 0));
-    const name = (window.__bengdaCampusName && window.__bengdaCampusName(current.campusId)) || current.campusId;
-    const rankText = d.focusRank.replace('{r}', index + 1).replace('{n}', rows.length);
-    let gapText;
-    if (index === 0) gapText = d.focusLeader;
-    else if (gap === 0) gapText = d.focusTie.replace('{next}', index);
-    else gapText = d.focusNext.replace('{gap}', fmt(gap)).replace('{next}', index);
+    const name = (window.__bengdaCampusName && window.__bengdaCampusName(currentId)) || currentId;
+    const set = (id, text) => { const n = document.getElementById(id); if (n && n.textContent !== text) n.textContent = text; };
+    set('hud-rank-pos', d.focusRank.replace('{r}', index + 1).replace('{n}', rows.length));
+    set('hud-rank-name', name);
+    if (index === 0) set('hud-rank-gap', d.focusLeader);
+    else if (gap === 0) set('hud-rank-gap', d.focusTie.replace('{next}', index));
+    else set('hud-rank-gap', d.focusNext.replace('{gap}', fmt(gap)).replace('{next}', index));
+    set('hud-rank-topgap', d.focusTop.replace('{gap}', fmt(topGap)));
     const denom = next ? (Number(next.totalDamage) || 0) : (Number(rows[0].totalDamage) || 0);
     const fill = index === 0 ? 100 : denom > 0 ? Math.min(100, (Number(current.totalDamage) || 0) / denom * 100) : 0;
-    const set = (id, text) => { const el = document.getElementById(id); if (el && el.textContent !== text) el.textContent = text; };
-    set('brf-kicker', d.focusKicker);
-    set('brf-rank', rankText);
-    set('brf-name', name);
-    set('brf-gap', gapText);
-    set('brf-topgap', d.focusTop.replace('{gap}', fmt(topGap)));
-    const bar = document.getElementById('brf-fill');
+    const bar = document.getElementById('hud-rank-fill');
     if (bar) bar.style.width = fill.toFixed(1) + '%';
+    el.style.display = '';
   }
-
   function ensureEmptyCss(){
     if (document.getElementById('or-empty-css')) return;
     const st = document.createElement('style');
@@ -153,7 +158,6 @@
     setText(document.querySelector('.cb-list-head b'), d.maps);
     setText(document.getElementById('campus-count'), d.campuses);
     setText(document.querySelector('.cb-foot'), d.foot);
-    renderFocus();
     const list = document.getElementById('rank-list');
     if (window.__onlineRows && list && (!list.querySelector('.online-row,.rank-empty') || window.__renderedLang !== lang())) render();
   }
@@ -237,6 +241,12 @@
         return String(a.campusId).localeCompare(String(b.campusId));
       });
       window.__onlineRows = rows;
+      const currentId = window.CAMPUS && window.CAMPUS.campusId;
+      const newCurrent = rows.find(x => x.campusId === currentId);
+      const newBase = newCurrent ? (Number(newCurrent.totalDamage) || 0) : 0;
+      if (hudServerRows.length && newBase >= hudServerCurrent + hudBonus - 1) hudBonus = 0;
+      hudServerRows = rows.map(r => ({ ...r }));
+      hudServerCurrent = newBase;
       window.__onlineOrder = order;
       window.__onlineError = false;
     } catch (error) {
@@ -252,7 +262,7 @@
 
   function boot(){
     ensureEmptyCss();
-    ensureFocusCard();
+    ensureHudRank();
     bindButtons();
     applyLabels();
     refresh();
@@ -265,11 +275,16 @@
     const labelObs = new MutationObserver(() => { bindButtons(); applyLabels(); });
     for (const el of labelTargets) labelObs.observe(el, { childList: true, subtree: true, characterData: true });
     setInterval(() => { if (!document.hidden) refresh(); }, 15000);
+    setInterval(renderHudRank, 500);
+    window.addEventListener('fhac-online-report', (event) => {
+      const gained = Number(event.detail && event.detail.damage) || 0;
+      if (gained > 0) { hudBonus += gained; renderHudRank(); }
+      setTimeout(refresh, 150);
+    });
     for (const id of ['reset', 'end-reset']) {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => { setTimeout(refresh, 900); }, true);
     }
-    window.addEventListener('fhac-online-report', () => { setTimeout(refresh, 150); });
     const list = document.getElementById('rank-list');
     if (list) {
       new MutationObserver(() => {

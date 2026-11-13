@@ -24,6 +24,7 @@
     autoTimer: null,
     busy: false,
     starting: false,
+    submittedDamage: 0,
   };
 
   function uuid() {
@@ -159,6 +160,7 @@
       });
       run.reported = true;
       state.run = null;
+      state.submittedDamage += damage;
       try {
         window.dispatchEvent(new CustomEvent('fhac-online-report', { detail: { damage, reason } }));
       } catch (e) {}
@@ -296,6 +298,7 @@
     playerId,
     publicName,
     get run() { return state.run; },
+    get submittedDamage() { return state.submittedDamage; },
     get lastError() { return state.lastError; },
   };
 })();
