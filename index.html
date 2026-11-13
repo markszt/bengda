@@ -6196,6 +6196,8 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
   const css=document.createElement('style');
   css.textContent=`
   #menu-toggle{justify-content:center!important;align-items:center!important}
+  body.playing #menu-toggle,
+  body.playing #menu-toggle.open{display:flex!important;right:0!important;z-index:10000!important}
   `;
   document.head.appendChild(css);
   function stabilize(){
