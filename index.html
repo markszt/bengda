@@ -5459,19 +5459,6 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
     g.querySelector('.w').textContent=l==='zh'?t[2]:t[3];
     g.querySelector('.bar i').style.width=v+'%';
   }
-  function addHint(){
-    if(document.getElementById('bengda-hint'))return;
-    const h=document.createElement('div'); h.id='bengda-hint';
-    h.innerHTML='<span class="line"></span><span id="bengda-hint-text"></span>';
-    document.body.appendChild(h);
-  }
-  function updateHint(){
-    const h=document.getElementById('bengda-hint'); if(!h)return;
-    const l=lang(); const started=CAMPUS.state.started;
-    h.style.display=started?'block':'none';
-    const el=document.getElementById('bengda-hint-text');
-    if(el) el.textContent=l==='zh'?'破坏到 2/3 有彩蛋':l==='de'?'Bei 2/3 wartet ein Easter Egg':'An easter egg at 2/3';
-  }
   function addSort(){
     const head=$('.cb-head'); if(!head||document.getElementById('rank-sort'))return;
     const b=document.createElement('button'); b.id='rank-sort'; b.textContent='↕'; b.title='排序';
@@ -5628,11 +5615,11 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
     b.setAttribute('aria-label','ATOMBOMBE · 8');
   }
   function applyAll(){
-    setTitle();setWeaponLabels();setSkillButton();setMenuLabels();setCampusNames();updateGrade();updateHint();setThumbs();
+    setTitle();setWeaponLabels();setSkillButton();setMenuLabels();setCampusNames();updateGrade();setThumbs();
   }
   function boot(){
     if(!window.CAMPUS){setTimeout(boot,400);return;}
-    addStyle();addCredits();addGrade();addHint();addSort();addControls();addNukeFx();
+    addStyle();addCredits();addGrade();addSort();addControls();addNukeFx();
     applyAll(); sync68(); applyAll();
     document.querySelectorAll('.lang').forEach(b=>b.addEventListener('click',()=>setTimeout(applyAll,350)));
     const fx=document.getElementById('fx-toggle'); if(fx)fx.addEventListener('click',()=>setTimeout(setSkillButton,0),true);
