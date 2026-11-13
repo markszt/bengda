@@ -154,6 +154,7 @@
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => { setTimeout(refresh, 900); }, true);
     }
+    window.addEventListener('fhac-online-report', () => { setTimeout(refresh, 150); });
     const list = document.getElementById('rank-list');
     if (list) {
       new MutationObserver(() => {

@@ -21,6 +21,8 @@
     playerId: null,
     publicName: null,
     lastError: null,
+    autoTimer: null,
+    busy: false,
   };
 
   function uuid() {
@@ -133,9 +135,13 @@
           damage,
           gameVersion: '2.05',
         }),
+        keepalive: reason === 'pagehide' || reason === 'hidden',
       });
       run.reported = true;
       state.run = null;
+      try {
+        window.dispatchEvent(new CustomEvent('fhac-online-report', { detail: { damage, reason } }));
+      } catch (e) {}
       return { ...res, reason, damage, elapsedClient };
     } catch (error) {
       state.lastError = error;
@@ -145,6 +151,42 @@
       state.run = null;
       return { error: error.message, reason: 'failed' };
     }
+  }
+
+  function stopAuto() {
+    if (state.autoTimer) {
+      clearInterval(state.autoTimer);
+      state.autoTimer = null;
+    }
+  }
+
+  function startAuto() {
+    stopAuto();
+    state.autoTimer = setInterval(async () => {
+      if (state.busy || !state.run) return;
+      const game = window.CAMPUS && window.CAMPUS.state;
+      if (!game || !game.started) return;
+      if (game.ended) {
+        state.busy = true;
+        try { await finishRun('ended'); } catch (error) { state.lastError = error; }
+        stopAuto();
+        state.busy = false;
+        return;
+      }
+      const damage = gameDamage() - state.run.startDamage;
+      if (damage < 1) return;
+      state.busy = true;
+      try {
+        const result = await finishRun('auto');
+        if (result && !result.error && game.started && !game.ended) {
+          await startRun();
+        }
+      } catch (error) {
+        state.lastError = error;
+      } finally {
+        state.busy = false;
+      }
+    }, 6000);
   }
 
   async function deleteData() {
@@ -170,8 +212,13 @@
     if (window.__fhacOnlineBound) return;
     window.__fhacOnlineBound = true;
     window.addEventListener('pagehide', () => {
-      // Use a best-effort request; browsers may drop it, so prefer explicit finish.
+      stopAuto();
       if (state.run && !state.run.reported) finishRun('pagehide').catch(() => {});
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden || !state.run || state.run.reported) return;
+      stopAuto();
+      finishRun('hidden').catch(() => {});
     });
   }
 
@@ -186,13 +233,14 @@
     const play = document.getElementById('play');
     if (play) {
       play.addEventListener('click', () => {
-        startRun().catch((err) => { state.lastError = err; });
+        startRun().then(() => startAuto()).catch((err) => { state.lastError = err; });
       }, true);
     }
     for (const id of ['reset', 'end-reset']) {
       const button = document.getElementById(id);
       if (button) {
         button.addEventListener('click', () => {
+          stopAuto();
           finishRun(id).catch((err) => { state.lastError = err; });
         }, true);
       }
@@ -207,6 +255,8 @@
     loadStats,
     loadLeaderboard,
     deleteData,
+    startAuto,
+    stopAuto,
     playerId,
     publicName,
     get run() { return state.run; },
