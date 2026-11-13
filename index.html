@@ -508,12 +508,6 @@ body.fxon .weapon-card{border-color:#ff7a2a}
       </div>
 
 
-      <div class="cb-list-head">
-        <b>UNIVERSITÄTSKARTEN</b>
-        <span id="campus-count">19 CAMPUSES</span>
-      </div>
-      <div id="campus-list" class="campus-list"></div>
-      <div class="cb-foot">Etagen = interaktive Gebäudeebenen · HP = 1.000.000 + Etagen × 1.200</div>
       <section class="cb-rank">
         <div class="cb-head">
           <div><b>RANKING</b><small>niedrigste Rest-HP zuerst</small></div>
@@ -522,6 +516,12 @@ body.fxon .weapon-card{border-color:#ff7a2a}
         <div id="rank-list" class="rank-list"></div>
         <button id="rank-expand" class="cb-expand" type="button">ALLE RANKINGS ANZEIGEN</button>
       </section>
+      <div class="cb-list-head">
+        <b>UNIVERSITÄTSKARTEN</b>
+        <span id="campus-count">19 CAMPUSES</span>
+      </div>
+      <div id="campus-list" class="campus-list"></div>
+      <div class="cb-foot">Etagen = interaktive Gebäudeebenen · HP = 1.000.000 + Etagen × 1.200</div>
     </aside>
   </div>
 </div>
@@ -6200,7 +6200,9 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
   #bengda-grade{min-width:0!important;padding:6px 10px!important}
   #bengda-grade .w,#bengda-grade .bar{display:none!important}
   .cb-head #rank-count{margin-left:auto}
-  #fx-toggle{z-index:10000!important}
+  #fx-toggle{display:none!important;z-index:10000!important}
+  body.playing #fx-toggle{display:block!important}
+  #intro:not(.hidden) ~ #fx-toggle{display:none!important}
   body.playing #menu-toggle,
   body.playing #menu-toggle.open{display:flex!important;right:0!important;z-index:10000!important}
   `;
@@ -6525,14 +6527,14 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
 })();
 </script>
 
-<script src="./online.js"></script>
+<script src="./online.js?v=20261113-8"></script>
 <script>
   FHACOnline.configure({
     apiBase: 'https://fh-aachen-leaderboard.markszt0311-a52.workers.dev'
   });
   FHACOnline.attachToGame();
 </script>
-<script src="./online-rank.js"></script>
+<script src="./online-rank.js?v=20261113-8"></script>
 
 <script>
 (function(){

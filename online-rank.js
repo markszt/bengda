@@ -94,6 +94,7 @@
     window.__renderedLang = lang();
     if (!list) return;
     list.dataset.online = '1';
+    list.classList.toggle('bengda-all', expanded);
     list.innerHTML = '';
     const rows = window.__onlineRows || [];
     const expBtn = document.getElementById('rank-expand');
