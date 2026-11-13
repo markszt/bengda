@@ -87,6 +87,18 @@
     if (window.__onlineRows && list && (!list.querySelector('.online-row,.rank-empty') || window.__renderedLang !== lang())) render();
   }
 
+  function openCampus(id) {
+    try {
+      localStorage.setItem('ca-campus', id);
+      const url = new URL(location.href);
+      url.searchParams.delete('v');
+      url.searchParams.delete('play');
+      url.searchParams.set('campus', id);
+      url.searchParams.set('play', '1');
+      location.href = url.toString();
+    } catch (e) {}
+  }
+
   function render(){
     if (!window.__onlineRows) return;
     const d = t();
@@ -112,6 +124,10 @@
       const sub = `${row.runs || 0} ${d.runs}${row.city ? ' · ' + row.city : ''}`;
       const el = document.createElement('div');
       el.className = 'rank-row online-row';
+      el.style.cursor = 'pointer';
+      el.dataset.campusId = row.campusId;
+      el.title = name;
+      el.addEventListener('click', () => openCampus(row.campusId));
       el.innerHTML = `<div class="rank-no">${rowIndex + 1}</div>
         <div class="rank-main">
           <div class="rank-name">${esc(name)}</div>

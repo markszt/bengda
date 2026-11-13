@@ -23,6 +23,7 @@
     lastError: null,
     autoTimer: null,
     busy: false,
+    starting: false,
   };
 
   function uuid() {
@@ -107,20 +108,26 @@
   }
 
   async function startRun() {
-    const id = playerId();
-    const res = await api('/api/runs/start', {
-      method: 'POST',
-      body: JSON.stringify({ playerId: id }),
-    });
-    state.run = {
-      nonce: res.nonce,
-      startedAt: res.startedAt || new Date().toISOString(),
-      startDamage: gameDamage(),
-      startClientTime: Date.now(),
-      campusId: currentCampusId(),
-      reported: false,
-    };
-    return state.run;
+    if (state.starting) return state.run;
+    state.starting = true;
+    try {
+      const id = playerId();
+      const res = await api('/api/runs/start', {
+        method: 'POST',
+        body: JSON.stringify({ playerId: id }),
+      });
+      state.run = {
+        nonce: res.nonce,
+        startedAt: res.startedAt || new Date().toISOString(),
+        startDamage: gameDamage(),
+        startClientTime: Date.now(),
+        campusId: currentCampusId(),
+        reported: false,
+      };
+      return state.run;
+    } finally {
+      state.starting = false;
+    }
   }
 
   /**
@@ -253,6 +260,16 @@
         startRun().then(() => startAuto()).catch((err) => { state.lastError = err; });
       }, true);
     }
+    // The game can auto-start from ?play=1 (campus cards / ranking rows).
+    setTimeout(function watchAutoStart() {
+      try {
+        const game = window.CAMPUS && window.CAMPUS.state;
+        if (game && game.started && !game.ended && !state.run && !state.starting && !state.busy) {
+          startRun().then(() => startAuto()).catch((err) => { state.lastError = err; });
+        }
+      } catch (e) {}
+      setTimeout(watchAutoStart, 700);
+    }, 350);
     for (const id of ['reset', 'end-reset']) {
       const button = document.getElementById(id);
       if (button) {
