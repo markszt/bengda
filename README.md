@@ -18,3 +18,7 @@ The Cloudflare Worker and D1 database are deployed separately and are not in thi
 Backend:
 
 https://fh-aachen-leaderboard.markszt0311-a52.workers.dev
+
+## Credits
+
+Game code, UI and online leaderboard developed with assistance from DeepSeek (DSH coding agent).
