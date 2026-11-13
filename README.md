@@ -134,8 +134,23 @@ FH-Aachen-Online/
 
 - 开发方式：DeepSeek + DSH coding agent
 - 开发过程：多轮迭代，包含游戏逻辑、音效、HUD、在线排行榜、手机适配和 Cloudflare 后端
-- **精确 token 用量**：当前运行环境没有暴露本次会话的精确 usage 数字，因此本文档不写虚构数值
-- 如需准确用量，请查看 DeepSeek API 控制台的 usage / billing 页面
+
+以下数字来自本地 DSH 会话日志的 usage 字段（截至 2026-11-13）：
+
+| 项目 | 数量 |
+|---|---:|
+| 总处理 Token（含缓存读取） | 985,046,848 |
+| 输入 Token | 4,692,290 |
+| 输出 Token | 2,357,118 |
+| 缓存读取 Token | 977,997,440 |
+| 不含缓存读取的 Token | 7,049,408 |
+| 当前上下文规模 | 约 406,245 |
+
+说明：
+
+- 这是会话统计，不等同于 DeepSeek 账单。
+- 缓存读取 Token 的计费单价通常低于普通输入 Token。
+- 如需最终费用，请以 DeepSeek API 控制台的 usage / billing 为准。
 
 ---
 
