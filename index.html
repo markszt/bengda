@@ -5081,7 +5081,6 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
   function triggerShot() {
     init(); if (!ctx) return;
     const k = weaponKind();
-    if (k === 'shotgun') return;
     shot(k);
     if (k === 'laser') { startBeam(); setTimeout(stopBeam, 220); }
   }
@@ -5089,8 +5088,7 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
     const play = document.getElementById('play');
     if (play) play.addEventListener('click', () => { init(); setTimeout(() => { try { if (window.CAMPUS) window.CAMPUS.state.sound = false; } catch (e) {} }, 0); }, { capture: true });
     const canvas = document.querySelector('#stage canvas') || document.querySelector('canvas');
-    // Do not play shot sounds on pointerdown: dragging the camera must stay silent.
-    // Actual firing is handled by pointerup/tap in the newer audio layer.
+    if (canvas) canvas.addEventListener('pointerdown', (e) => { if (e.button === 0) triggerShot(); }, { capture: true });
     window.addEventListener('keydown', (e) => {
       if (e.key.toLowerCase() !== 'e' || e.repeat) return;
       init(); const k = weaponKind();
@@ -5203,7 +5201,6 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
   function kind(){const a=[...document.querySelectorAll('.wbtn')].find(b=>b.classList.contains('active'));return a?a.dataset.kind:'shotgun';}
   function shoot(k){
     if(!ctx||muted)return;lastKind=k;
-    if(k==='shotgun')return;
     if(k!=='nuke'){nukePending=false;if(nukeTimer)clearTimeout(nukeTimer);}
     if(k==='shotgun'){const now=performance.now();shotgunQueue=shotgunQueue.filter(q=>now-q.at<2500);shotgunQueue.push({at:now,played:false});}
     else if(k==='football'){/* bounce sound only */}
@@ -5247,27 +5244,18 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
     window.addEventListener('pointerdown',()=>ensure(),true);window.addEventListener('keydown',()=>ensure(),true);
     const canvas=document.querySelector('#stage canvas')||document.querySelector('canvas');
     let ldrag=false,lpath=[],llen=0,lx=0,ly=0;
-    let pressKind=null,pressX=0,pressY=0,pressInside=false;
     if(canvas){
       canvas.addEventListener('pointerdown',e=>{
         if(e.button!==0)return;ensure();
-        if(kind()==='laser'){ldrag=true;lpath=[[e.clientX,e.clientY]];llen=0;lx=e.clientX;ly=e.clientY;pressKind=null;return;}
-        // Record the press. Do not play/fire on pointerdown: a drag must stay silent.
-        pressKind=kind();pressX=e.clientX;pressY=e.clientY;
+        if(kind()==='laser'){ldrag=true;lpath=[[e.clientX,e.clientY]];llen=0;lx=e.clientX;ly=e.clientY;return;}
         let h=null;try{h=CAMPUS.pickAt(e.clientX,e.clientY);}catch(err){}
-        pressInside=!!(h&&h.point&&Math.abs(h.point.x)<=296&&Math.abs(h.point.z)<=296);
+        const inside=h&&h.point&&Math.abs(h.point.x)<=296&&Math.abs(h.point.z)<=296;
+        if(!inside){play('hint',.35,0);return;}
+        shoot(kind());
       },true);
       canvas.addEventListener('pointermove',e=>{if(!ldrag)return;llen+=Math.hypot(e.clientX-lx,e.clientY-ly);lx=e.clientX;ly=e.clientY;if(lpath.length<80)lpath.push([e.clientX,e.clientY]);},{passive:true});
-      canvas.addEventListener('pointercancel',()=>{ldrag=false;pressKind=null;});
       canvas.addEventListener('pointerup',e=>{
-        if(e.button!==0)return;
-        if(kind()!=='laser'){
-          const wasPress=pressKind;pressKind=null;
-          if(wasPress&&Math.hypot(e.clientX-pressX,e.clientY-pressY)<7){
-            if(!pressInside)play('hint',.35,0); else shoot(wasPress);
-          }
-          return;
-        }
+        if(e.button!==0||kind()!=='laser')return;
         let h0=null;try{h0=CAMPUS.pickAt(e.clientX,e.clientY);}catch(err){}
         if(!h0||!h0.point||Math.abs(h0.point.x)>296||Math.abs(h0.point.z)>296){ldrag=false;return;}
         let wlen=0,prev=null;
@@ -6435,14 +6423,14 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
 
 
 
-<script src="./online.js?v=20261113-15"></script>
+<script src="./online.js?v=20261113-16"></script>
 <script>
   FHACOnline.configure({
     apiBase: 'https://fh-aachen-leaderboard.markszt0311-a52.workers.dev'
   });
   FHACOnline.attachToGame();
 </script>
-<script src="./online-rank.js?v=20261113-15"></script>
+<script src="./online-rank.js?v=20261113-16"></script>
 
 <script>
 (function(){
