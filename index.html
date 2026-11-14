@@ -7043,6 +7043,24 @@ try{FHACOnline.configure({apiBase:'https://fh-aachen-leaderboard.markszt0311-a52
     } catch (e) {}
   }
 
+  function rankRowsLocal(){
+    const src = (hudServerRows.length ? hudServerRows : (window.__onlineRows || [])).map(r => ({ ...r }));
+    if (!src.length) return src;
+    const currentId = window.CAMPUS && window.CAMPUS.campusId;
+    const current = src.find(r => r.campusId === currentId);
+    if (current) {
+      const submitted = Number(window.FHACOnline && window.FHACOnline.submittedDamage) || 0;
+      const pending = Math.max(0, gameDamage() - submitted);
+      current.totalDamage = (Number(current.totalDamage) || 0) + hudBonus + pending;
+    }
+    const dir = order === 'asc' ? 1 : -1;
+    src.sort((a, b) => {
+      const diff = ((Number(a.totalDamage) || 0) - (Number(b.totalDamage) || 0)) * dir;
+      return diff || String(a.campusId).localeCompare(String(b.campusId));
+    });
+    return src;
+  }
+
   function render(){
     if (!window.__onlineRows) return;
     const d = t();
@@ -7053,7 +7071,7 @@ try{FHACOnline.configure({apiBase:'https://fh-aachen-leaderboard.markszt0311-a52
     list.classList.add('rank-ready');
     list.classList.toggle('bengda-all', expanded);
     list.innerHTML = '';
-    const rows = window.__onlineRows || [];
+    const rows = rankRowsLocal();
     const expBtn = document.getElementById('rank-expand');
     if (expBtn) expBtn.style.display = rows.length > 3 ? '' : 'none';
     if (!rows.length) {
@@ -7139,12 +7157,15 @@ try{FHACOnline.configure({apiBase:'https://fh-aachen-leaderboard.markszt0311-a52
     refresh();
     window.addEventListener('fhac-online-report', (event) => {
       const gained = Number(event.detail && event.detail.damage) || 0;
-      if (gained > 0) { hudBonus += gained; renderHudRank(); }
+      if (gained > 0) { hudBonus += gained; renderHudRank(); render(); }
       // Keep the opening leaderboard snapshot; do not re-fetch it every 6 seconds.
     });
     if (!window.__hudLocalTimer) window.__hudLocalTimer = setInterval(() => {
       if (!document.hidden && window.CAMPUS && window.CAMPUS.state && window.CAMPUS.state.started) renderHudRank();
     }, 500);
+    if (!window.__rankLocalTimer) window.__rankLocalTimer = setInterval(() => {
+      if (!document.hidden && window.CAMPUS && window.CAMPUS.state && window.CAMPUS.state.started) render();
+    }, 1000);
     for (const id of ['reset', 'end-reset']) {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => { setTimeout(refresh, 900); }, true);
