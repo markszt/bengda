@@ -162,6 +162,15 @@
     setText(document.querySelector('.cb-list-head b'), d.maps);
     setText(document.getElementById('campus-count'), d.campuses);
     setText(document.querySelector('.cb-foot'), d.foot);
+    const selEl = document.getElementById('selected-campus-name');
+    if (selEl) {
+      const obs = new MutationObserver(() => { syncLocalizedUi(); });
+      obs.observe(selEl, { childList: true, characterData: true, subtree: true });
+    }
+    document.querySelectorAll('.lang').forEach(btn => {
+      btn.addEventListener('click', () => setTimeout(syncLocalizedUi, 120), true);
+    });
+    setInterval(syncLocalizedUi, 350);
     const list = document.getElementById('rank-list');
     if (window.__onlineRows && list && (!list.querySelector('.online-row,.rank-empty') || window.__renderedLang !== lang())) render();
   }
@@ -183,6 +192,12 @@
     const city = lang() === 'zh' && zn ? zn[1] : (c && c.city) || '';
     if (sel) sel.textContent = name;
     if (kick) kick.textContent = city ? city + ' · ' + name : name;
+    const meta = document.getElementById('selected-campus-meta');
+    if (meta && c) {
+      const floors = c.floors || 0;
+      const hp = c.hp || 0;
+      meta.textContent = `${city} · ${floors}${lang() === 'zh' ? ' 层' : ' Etagen'} · ${hp.toLocaleString('de-DE')} HP`;
+    }
     document.querySelectorAll('#campus-list .campus-card').forEach(card => {
       const badge = card.querySelector('.cc-badge');
       if (!badge || !c) return;
