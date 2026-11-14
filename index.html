@@ -7078,9 +7078,10 @@ try{FHACOnline.configure({apiBase:'https://fh-aachen-leaderboard.markszt0311-a52
       list.innerHTML = `<div class="rank-empty">${esc(window.__onlineError ? d.error : d.empty)}</div>`;
       return;
     }
-    const max = Math.max(1, ...rows.map(r => Number(r.totalDamage) || 0));
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      const row = rows[rowIndex];
+    const visibleRows = expanded ? rows : rows.slice(0, 3);
+    const max = Math.max(1, ...visibleRows.map(r => Number(r.totalDamage) || 0));
+    for (let rowIndex = 0; rowIndex < visibleRows.length; rowIndex++) {
+      const row = visibleRows[rowIndex];
       const name = localizedCampus(row.campusId, row.name);
       const pct = Math.max(0, Math.min(100, (Number(row.totalDamage) || 0) / max * 100));
       const zh = window.__bengdaIa && window.__bengdaIa[row.campusId];
@@ -7165,7 +7166,7 @@ try{FHACOnline.configure({apiBase:'https://fh-aachen-leaderboard.markszt0311-a52
     }, 500);
     if (!window.__rankLocalTimer) window.__rankLocalTimer = setInterval(() => {
       if (!document.hidden && window.CAMPUS && window.CAMPUS.state && window.CAMPUS.state.started) render();
-    }, 1000);
+    }, 2000);
     for (const id of ['reset', 'end-reset']) {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => { setTimeout(refresh, 900); }, true);
