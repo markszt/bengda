@@ -2,7 +2,7 @@
 
 BENGDA 是一个 3D 校园拆除游戏。玩家选择一所大学，在基于 OpenStreetMap 数据生成的 3D 校园里破坏建筑，伤害会按 **大学** 汇总到在线排行榜。
 
-**在线游玩：** https://markszt.github.io/bengda/v30.html
+**在线游玩：** https://markszt.github.io/bengda/v31.html
 
 > 虚构娱乐游戏，非官方项目。
 
@@ -27,7 +27,7 @@ BENGDA 是一个 3D 校园拆除游戏。玩家选择一所大学，在基于 Op
 | 文件 | 作用 |
 |---|---|
 | `index.html` | 游戏引擎、UI、样式、内嵌音频和校园目录 |
-| `maps/` | 30 个独立校园 JSON 数据文件，每张地图单独加载 |
+| `maps/` | 30 个独立校园 JSON 数据文件（按需异步加载），每张地图单独加载 |
 | `online.js` | 开局、每 6 秒自动上传伤害、提交当前大学 ID |
 | `online-rank.js` | 游戏内排名 HUD、大学排行榜、排序、三语言文案 |
 | `README.md` | 项目说明 |
@@ -94,7 +94,7 @@ git push
 GitHub Pages 会自动重新部署：
 
 ```text
-https://markszt.github.io/bengda/v30.html
+https://markszt.github.io/bengda/v31.html
 ```
 
 ### 修改后端
