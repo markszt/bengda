@@ -13,7 +13,7 @@
       expand: 'ALLE UNIVERSITÄTEN ANZEIGEN', collapse: 'NUR TOP 3',
       empty: 'Noch keine Universität beschädigt.', error: 'Online-Rangliste nicht erreichbar.',
       runs: 'Runs', dmg: 'DMG',
-      maps: 'CAMPUS-KARTEN', campuses: '19 CAMPUS',
+      maps: 'CAMPUS-KARTEN', campuses: '30 CAMPUS',
       focusKicker: 'AKTUELLE KARTE', focusRank: 'PLATZ {r} / {n}',
       focusNext: 'NOCH {gap} DMG BIS PLATZ {next}', focusTie: 'GLEICHSTAND MIT PLATZ {next}',
       focusLeader: 'PLATZ 1 · AN DER SPITZE', focusTop: 'BIS PLATZ 1: {gap} DMG',
@@ -26,7 +26,7 @@
       expand: 'SHOW ALL UNIVERSITIES', collapse: 'ONLY TOP 3',
       empty: 'No university damaged yet.', error: 'Online ranking unavailable.',
       runs: 'Runs', dmg: 'DMG',
-      maps: 'CAMPUS MAPS', campuses: '19 CAMPUSES',
+      maps: 'CAMPUS MAPS', campuses: '30 CAMPUSES',
       focusKicker: 'CURRENT CAMPUS', focusRank: 'RANK {r} / {n}',
       focusNext: '{gap} DMG TO RANK {next}', focusTie: 'TIED WITH RANK {next}',
       focusLeader: 'RANK 1 · AT THE TOP', focusTop: 'TO RANK 1: {gap} DMG',
@@ -39,7 +39,7 @@
       expand: '显示全部大学', collapse: '只看前 3',
       empty: '暂无大学受损记录。', error: '在线排行榜暂时不可用。',
       runs: '局', dmg: '伤害',
-      maps: '哒学地图', campuses: '19 所哒学',
+      maps: '哒学地图', campuses: '30 所哒学',
       focusKicker: '当前大学', focusRank: '第 {r} / {n} 名',
       focusNext: '距离第 {next} 名还差 {gap} 伤害', focusTie: '与第 {next} 名并列',
       focusLeader: '第 1 名 · 榜首', focusTop: '距离第 1 名：{gap} 伤害',
@@ -106,10 +106,14 @@
     const next = index > 0 ? rows[index - 1] : null;
     const gap = next ? Math.max(0, (Number(next.totalDamage) || 0) - (Number(current.totalDamage) || 0)) : 0;
     const topGap = Math.max(0, (Number(rows[0].totalDamage) || 0) - (Number(current.totalDamage) || 0));
-    const name = (window.__bengdaCampusName && window.__bengdaCampusName(currentId)) || currentId;
+    const name = localizedCampus(currentId, current.name);
     const set = (id, text) => { const n = document.getElementById(id); if (n && n.textContent !== text) n.textContent = text; };
     set('hud-rank-pos', d.focusRank.replace('{r}', index + 1).replace('{n}', rows.length));
     set('hud-rank-name', name);
+    const hk = document.querySelector('.hp-panel .kicker');
+    const zh = window.__bengdaIa && window.__bengdaIa[currentId];
+    const city = lang() === 'zh' && zh ? zh[1] : (current.city || '');
+    if (hk) { const label = [city, name].filter(Boolean).join(' · '); if (hk.textContent !== label) hk.textContent = label; }
     if (index === 0) set('hud-rank-gap', d.focusLeader);
     else if (gap === 0) set('hud-rank-gap', d.focusTie.replace('{next}', index));
     else set('hud-rank-gap', d.focusNext.replace('{gap}', fmt(gap)).replace('{next}', index));
@@ -162,6 +166,39 @@
     if (window.__onlineRows && list && (!list.querySelector('.online-row,.rank-empty') || window.__renderedLang !== lang())) render();
   }
 
+  const localizedCampus = (id, fallback) => {
+    const c = (window.CAMPUS?.campuses || []).find(x => x.id === id);
+    if (lang() === 'zh' && window.__bengdaIa && window.__bengdaIa[id]) return window.__bengdaIa[id][0];
+    return (c && c.name) || fallback || id;
+  };
+
+  function syncLocalizedUi(){
+    if (!window.CAMPUS) return;
+    const id = window.CAMPUS.campusId;
+    const c = (window.CAMPUS.campuses || []).find(x => x.id === id);
+    const zn = window.__bengdaIa && window.__bengdaIa[id];
+    const sel = document.getElementById('selected-campus-name');
+    const kick = document.getElementById('selected-campus-kicker');
+    const name = localizedCampus(id, c && c.name);
+    const city = lang() === 'zh' && zn ? zn[1] : (c && c.city) || '';
+    if (sel) sel.textContent = name;
+    if (kick) kick.textContent = city ? city + ' · ' + name : name;
+    document.querySelectorAll('#campus-list .campus-card').forEach(card => {
+      const badge = card.querySelector('.cc-badge');
+      if (!badge || !c) return;
+      const campus = (window.CAMPUS.campuses || []).find(x => x.short === badge.textContent.trim());
+      if (!campus) return;
+      const local = localizedCampus(campus.id, campus.name);
+      const el = card.querySelector('.cc-name');
+      if (el && el.textContent !== local) el.textContent = local;
+      const meta = card.querySelector('.cc-meta');
+      if (meta) {
+        const locCity = lang() === 'zh' && window.__bengdaIa && window.__bengdaIa[campus.id] ? window.__bengdaIa[campus.id][1] : campus.city;
+        meta.textContent = `${locCity} · ${campus.floors}${lang() === 'zh' ? ' 层' : ' Etagen'} · OSM`;
+      }
+    });
+  }
+
   function openCampus(id) {
     try {
       localStorage.setItem('ca-campus', id);
@@ -194,9 +231,11 @@
     const max = Math.max(1, ...rows.map(r => Number(r.totalDamage) || 0));
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       const row = rows[rowIndex];
-      const name = (window.__bengdaCampusName && window.__bengdaCampusName(row.campusId)) || row.name || row.campusId;
+      const name = localizedCampus(row.campusId, row.name);
       const pct = Math.max(0, Math.min(100, (Number(row.totalDamage) || 0) / max * 100));
-      const sub = `${row.runs || 0} ${d.runs}${row.city ? ' · ' + row.city : ''}`;
+      const zh = window.__bengdaIa && window.__bengdaIa[row.campusId];
+      const city = lang() === 'zh' && zh ? zh[1] : row.city;
+      const sub = `${row.runs || 0} ${d.runs}${city ? ' · ' + city : ''}`;
       const el = document.createElement('div');
       el.className = 'rank-row online-row';
       el.style.cursor = 'pointer';
@@ -269,6 +308,7 @@
     setInterval(() => {
       bindButtons();
       lastLang = lang();
+      syncLocalizedUi();
       applyLabels();
     }, 800);
     const labelTargets = [document.querySelector('.cb-head'), document.getElementById('rank-count'), document.getElementById('rank-expand'), document.querySelector('.cb-list-head'), document.getElementById('campus-count'), document.querySelector('.cb-foot')].filter(Boolean);
