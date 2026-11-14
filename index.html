@@ -5450,7 +5450,7 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
     const close=document.getElementById('menu-close'); if(close) close.textContent = l==='zh'?'返回游戏':l==='de'?'ZURÜCK ZUM SPIEL':'BACK TO GAME';
     const search=document.getElementById('campus-search'); if(search) search.placeholder = l==='zh'?'搜索哒学或城市…':l==='de'?'Campus oder Stadt suchen …':'Search campus or city …';
     const rh=$('.cb-head b'); if(rh) rh.textContent = l==='zh'?'排名':l==='de'?'RANGLISTE':'RANKING';
-    const rs=$('.cb-head small'); if(rs) rs.textContent = l==='zh'?'按剩余血量排序':l==='de'?'nach Rest-HP':'by remaining HP';
+    const rs=$('.cb-head small'); if(rs) rs.textContent = l==='zh'?'按伤害排序':l==='de'?'nach Schaden':'by damage';
     const lh=$('.cb-list-head b'); if(lh) lh.textContent = l==='zh'?'哒学地图':l==='de'?'CAMPUS-KARTEN':'CAMPUS MAPS';
     const sb=$('.sb-label'); if(sb) sb.textContent = l==='zh'?'已选哒学':l==='de'?'AUSGEWÄHLTER CAMPUS':'SELECTED CAMPUS';
     const foot=$('.cb-foot'); if(foot) foot.textContent = l==='zh'?'层数 = 可破坏楼层 · 总血量 = 1.000.000 + 层数 × 1.200':l==='de'?'Etagen = interaktive Ebenen · HP = 1.000.000 + Etagen × 1.200':'Floors = destructible levels · HP = 1,000,000 + floors × 1,200';
@@ -6274,25 +6274,6 @@ totalEmissiveRadiance += gLava;`)};let M=new ke(d,f);M.position.y=0,M.receiveSha
 </script>
 <script>
 (function(){
-  const css=document.createElement('style');
-  css.textContent=`#rank-sort{width:auto!important;min-width:150px!important;padding:6px 10px!important;font:800 10px/1.3 system-ui!important;letter-spacing:.04em!important;text-align:center!important}`;
-  document.head.appendChild(css);
-  function run(){
-    if(!window.CAMPUS)return;
-    const b=document.getElementById('rank-sort');if(!b)return;
-    if(!b.dataset.order)b.dataset.order='min';
-    const max=b.dataset.order==='max',l=CAMPUS.state.lang;
-    b.textContent=l==='zh'?(max?'排序：血量最多':'排序：血量最少'):l==='de'?(max?'SORTIERUNG: MEISTE HP':'SORTIERUNG: WENIGSTE HP'):(max?'SORT: MOST HP':'SORT: LEAST HP');
-    b.title=b.textContent;
-  }
-  setInterval(run,350);run();
-})();
-
-</script>
-
-
-<script>
-(function(){
   let C=null,scene=null,Mesh=null,RG=null,BM=null,startT=null,iv=null,rings=[],active=false;
   function init(){
     C=window.CAMPUS;
@@ -7007,15 +6988,6 @@ try{FHACOnline.configure({apiBase:'https://fh-aachen-leaderboard.markszt0311-a52
     setText(document.querySelector('.cb-list-head b'), d.maps);
     setText(document.getElementById('campus-count'), d.campuses);
     setText(document.querySelector('.cb-foot'), d.foot);
-    const selEl = document.getElementById('selected-campus-name');
-    if (selEl) {
-      const obs = new MutationObserver(() => { syncLocalizedUi(); });
-      obs.observe(selEl, { childList: true, characterData: true, subtree: true });
-    }
-    document.querySelectorAll('.lang').forEach(btn => {
-      btn.addEventListener('click', () => setTimeout(syncLocalizedUi, 120), true);
-    });
-    setInterval(syncLocalizedUi, 350);
     const list = document.getElementById('rank-list');
     if (window.__onlineRows && list && (!list.querySelector('.online-row,.rank-empty') || window.__renderedLang !== lang())) render();
   }
@@ -7165,33 +7137,17 @@ try{FHACOnline.configure({apiBase:'https://fh-aachen-leaderboard.markszt0311-a52
     bindButtons();
     applyLabels();
     refresh();
-    setInterval(() => {
-      bindButtons();
-      lastLang = lang();
-      syncLocalizedUi();
-      applyLabels();
-    }, 800);
-    const labelTargets = [document.querySelector('.cb-head'), document.getElementById('rank-count'), document.getElementById('rank-expand'), document.querySelector('.cb-list-head'), document.getElementById('campus-count'), document.querySelector('.cb-foot')].filter(Boolean);
-    const labelObs = new MutationObserver(() => { bindButtons(); applyLabels(); });
-    for (const el of labelTargets) labelObs.observe(el, { childList: true, subtree: true, characterData: true });
-    setInterval(() => { if (!document.hidden) refresh(); }, 15000);
-    setInterval(renderHudRank, 500);
     window.addEventListener('fhac-online-report', (event) => {
       const gained = Number(event.detail && event.detail.damage) || 0;
       if (gained > 0) { hudBonus += gained; renderHudRank(); }
-      setTimeout(refresh, 150);
+      // Keep the opening leaderboard snapshot; do not re-fetch it every 6 seconds.
     });
+    if (!window.__hudLocalTimer) window.__hudLocalTimer = setInterval(() => {
+      if (!document.hidden && window.CAMPUS && window.CAMPUS.state && window.CAMPUS.state.started) renderHudRank();
+    }, 500);
     for (const id of ['reset', 'end-reset']) {
       const b = document.getElementById(id);
       if (b) b.addEventListener('click', () => { setTimeout(refresh, 900); }, true);
-    }
-    const list = document.getElementById('rank-list');
-    if (list) {
-      new MutationObserver(() => {
-        if (!list.querySelector('.online-row,.rank-empty')) {
-          setTimeout(refresh, 60);
-        }
-      }).observe(list, { childList: true });
     }
   }
 
@@ -7200,16 +7156,5 @@ try{FHACOnline.configure({apiBase:'https://fh-aachen-leaderboard.markszt0311-a52
 })();
 
 </script>
-
-<script>
-(function(){
-  if(new URLSearchParams(location.search).get('campus'))return;
-  function go(id){if(!id||!window.CAMPUS||id===CAMPUS.campusId)return;var u=new URL(location.href);u.searchParams.set('campus',id);u.searchParams.set('play','1');location.replace(u.toString());}
-  fetch('https://fh-aachen-leaderboard.markszt0311-a52.workers.dev/api/campus-leaderboard?period=all&order=desc&limit=1',{cache:'no-store'})
-    .then(function(r){return r.json()}).then(function(d){var e=(d.entries||[])[0];go(e&&Number(e.totalDamage)>0?e.campusId:'aachen')})
-    .catch(function(){go('aachen')});
-})();
-</script>
-
 </body>
 </html>
